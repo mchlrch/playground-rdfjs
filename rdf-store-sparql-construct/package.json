@@ -1,0 +1,16 @@
+{
+  "name": "rdf-store-sparql-construct",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@rdfjs/data-model": "^1.1.1",
+    "rdf-ext": "^1.1.2",
+    "rdf-store-sparql": "^2.0.0"
+  }
+}
