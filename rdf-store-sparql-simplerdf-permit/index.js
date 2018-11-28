@@ -20,9 +20,41 @@ function findQuadByLanguage (dataset, subject, predicate, languages, graph) {
     return selected.shift()
 }
 
+function objVal(any) {
+    return ((any || {}).object || {}).value
+}
+
 const store = new SparqlStore('https://permits.zazukoians.org/query')
 
-const query = `DESCRIBE <https://permits.zazukoians.org/permits/1>`
+// const query = `DESCRIBE <https://permits.zazukoians.org/permits/1>`
+const query = `BASE <http://permits.integ.ld.admin.ch/>
+PREFIX schema: <http://schema.org/>
+PREFIX bdb: <http://permits.ld.admin.ch/ns#>
+CONSTRUCT {
+  ?permit ?pp ?po  
+}
+WHERE {
+  ?permit ?pp ?po .
+  {
+    SELECT DISTINCT ?permit WHERE {
+      VALUES ?permitLevel {
+        <permitLevels/BUND>
+        <permitLevels/BUND_EXEC_KANTON>
+        <permitLevels/GEMEINDE>
+      }
+      VALUES ?permitAudience {
+        <permitAudiences/BETRIEB>
+        <permitAudiences/PERSON>
+        <permitAudiences/EVENT>
+      }
+      ?permit bdb:permitLevel ?permitLevel ;
+              schema:permitAudience ?permitAudience .
+      ?permit ?p ?text .
+      (?text ?score) <tag:stardog:api:property:textMatch> 'hund*' .
+    } LIMIT 20  
+  }
+}
+`
 
 const context = {
     'dateModified': 'http://schema.org/dateModified',
@@ -49,25 +81,26 @@ dataset.import(stream).then(() => {
 
         const permit = SimpleRDF(context, iri, dataset)
         
-        let status = dataset.match(p.subject, rdf.namedNode('http://permits.ld.admin.ch/ns#status'), null, null).toArray().shift().object.value
-        let permitLevel = dataset.match(p.subject, rdf.namedNode('http://permits.ld.admin.ch/ns#permitLevel'), null, null).toArray().shift().object.value
-        let permitAudience = dataset.match(p.subject, rdf.namedNode('http://schema.org/permitAudience'), null, null).toArray().shift().object.value
+        let status = objVal(dataset.match(p.subject, rdf.namedNode('http://permits.ld.admin.ch/ns#status'), null, null).toArray().shift())
+        let permitLevel = objVal(dataset.match(p.subject, rdf.namedNode('http://permits.ld.admin.ch/ns#permitLevel'), null, null).toArray().shift())
+        let permitAudience = objVal(dataset.match(p.subject, rdf.namedNode('http://schema.org/permitAudience'), null, null).toArray().shift())
         
-        const name = findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://schema.org/name'), langPrios).object.value
-        const description = findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://schema.org/description'), langPrios).object.value
-        const url = findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://schema.org/url'), langPrios).object.value        
-        const legalFoundation = findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://permits.ld.admin.ch/ns#legalFoundation'), langPrios).object.value
+        const name = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://schema.org/name'), langPrios))
+        const description = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://schema.org/description'), langPrios))
+        const url = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://schema.org/url'), langPrios))
+        const legalFoundation = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://permits.ld.admin.ch/ns#legalFoundation'), langPrios))
 
         console.log(`iri:            ${iri}`)
         console.log(`status:         ${status}`)
         console.log(`permitLevel:    ${permitLevel}`)
         console.log(`permitAudience: ${permitAudience}`)
 
-        console.log(`\nname:         ${name}`)
-        console.log(`description:  ${description}`)
-        console.log(`url:          ${url}`)
-        console.log(`legalFound.:  ${legalFoundation}`)
-        console.log(`dateModified: ${permit.dateModified}`)
+        console.log(`name:           ${name}`)
+        console.log(`description:    ${description}`)
+        console.log(`url:            ${url}`)
+        console.log(`legalFound.:    ${legalFoundation}`)
+        console.log(`dateModified:   ${permit.dateModified}`)
+        console.log('----------------------------------------------')
 
     })    
 
