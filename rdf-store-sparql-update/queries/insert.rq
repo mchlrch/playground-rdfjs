@@ -1,0 +1,14 @@
+PREFIX ex: <http://schema.example.org/>
+PREFIX gont: <https://gont.ch/>
+PREFIX schema: <http://schema.org/>
+
+INSERT DATA {
+	ex:test1 gont:canton <http://classifications.data.admin.ch/canton/BE> ;
+        schema:name "test-1" .
+
+    ex:test2 gont:canton <http://classifications.data.admin.ch/canton/NE> ;
+        schema:name "test-2" .
+
+    ex:test3 gont:canton <http://classifications.data.admin.ch/canton/VD> ;
+        schema:name "test-3" .
+}

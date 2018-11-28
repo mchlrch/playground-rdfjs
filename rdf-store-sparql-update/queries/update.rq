@@ -1,0 +1,11 @@
+PREFIX ex: <http://schema.example.org/>
+PREFIX gont: <https://gont.ch/>
+PREFIX schema: <http://schema.org/>
+
+DELETE { ?t schema:name ?name . }
+INSERT { ?t schema:name 'T-1' }
+WHERE
+{
+    ?t gont:canton <http://classifications.data.admin.ch/canton/BE> .
+    ?t schema:name ?name .
+} 
