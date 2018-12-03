@@ -28,9 +28,9 @@ const store = new SparqlStore('https://permits.zazukoians.org/query')
 
 // const query = `DESCRIBE <https://permits.zazukoians.org/permits/1>`
 
-const query = `BASE <http://permits.integ.ld.admin.ch/>
-PREFIX schema: <http://schema.org/>
-PREFIX bdb: <http://permits.ld.admin.ch/ns#>
+const query = `BASE <https://permits.zazukoians.org/>
+PREFIX schema: <https://schema.org/>
+PREFIX bdb: <https://permits.ld.admin.ch/schema/>
 CONSTRUCT {  
   ?permit a schema:GovernmentPermit .
   ?permit bdb:permitLevel ?permitLevel .
@@ -47,6 +47,7 @@ CONSTRUCT {
   ?agency ?ap ?ao .
 }
 WHERE {          
+GRAPH <https://linked.opendata.swiss/graph/seco/permits> {
   ?permit bdb:permitLevel ?permitLevel .  
   OPTIONAL { ?permit schema:permitAudience ?permitAudience }
   OPTIONAL { ?permit bdb:status ?status }  
@@ -65,14 +66,14 @@ WHERE {
   {
     SELECT DISTINCT ?permit WHERE {
       VALUES ?permitLevel {
-        <permitLevels/BUND>
-        <permitLevels/BUND_EXEC_KANTON>
-        <permitLevels/GEMEINDE>
+        <permitlevels/BUND>
+        <permitlevels/BUND_EXEC_KANTON>
+        <permitlevels/GEMEINDE>
       }
       VALUES ?permitAudience {
-        <permitAudiences/BETRIEB>
-        <permitAudiences/PERSON>
-        <permitAudiences/EVENT>
+        <permitaudiences/BETRIEB>
+        <permitaudiences/PERSON>
+        <permitaudiences/EVENT>
       }
       ?permit bdb:permitLevel ?permitLevel ;
               schema:permitAudience ?permitAudience .
@@ -81,11 +82,12 @@ WHERE {
     } LIMIT 20  
   }
 }
+}
 `
 
 const context = {
-    'dateModified': 'http://schema.org/dateModified',
-    'agency': 'http://permits.ld.admin.ch/ns#agency',
+    'dateModified': 'https://schema.org/dateModified',
+    'agency': 'https://permits.ld.admin.ch/schema/agency',
 }
 
 const stream = store.construct(query)
@@ -99,7 +101,7 @@ dataset.import(stream).then(() => {
     const permits = dataset.match(
         null,
         rdf.namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
-        rdf.namedNode('http://schema.org/GovernmentPermit')
+        rdf.namedNode('https://schema.org/GovernmentPermit')
     )
 
     permits.forEach(p => {
@@ -109,14 +111,14 @@ dataset.import(stream).then(() => {
 
         const permit = SimpleRDF(context, iri, dataset)
         
-        let status = objVal(dataset.match(p.subject, rdf.namedNode('http://permits.ld.admin.ch/ns#status'), null, null).toArray().shift())
-        let permitLevel = objVal(dataset.match(p.subject, rdf.namedNode('http://permits.ld.admin.ch/ns#permitLevel'), null, null).toArray().shift())
-        let permitAudience = objVal(dataset.match(p.subject, rdf.namedNode('http://schema.org/permitAudience'), null, null).toArray().shift())
+        let status = objVal(dataset.match(p.subject, rdf.namedNode('https://permits.ld.admin.ch/schema/status'), null, null).toArray().shift())
+        let permitLevel = objVal(dataset.match(p.subject, rdf.namedNode('https://permits.ld.admin.ch/schema/permitLevel'), null, null).toArray().shift())
+        let permitAudience = objVal(dataset.match(p.subject, rdf.namedNode('https://schema.org/permitAudience'), null, null).toArray().shift())
         
-        const name = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://schema.org/name'), langPrios))
-        const description = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://schema.org/description'), langPrios))
-        const url = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://schema.org/url'), langPrios))
-        const legalFoundation = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('http://permits.ld.admin.ch/ns#legalFoundation'), langPrios))
+        const name = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('https://schema.org/name'), langPrios))
+        const description = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('https://schema.org/description'), langPrios))
+        const url = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('https://schema.org/url'), langPrios))
+        const legalFoundation = objVal(findQuadByLanguage(dataset, p.subject, rdf.namedNode('https://permits.ld.admin.ch/schema/legalFoundation'), langPrios))
 
         console.log(`iri:            ${iri}`)
         console.log(`status:         ${status}`)
@@ -131,10 +133,10 @@ dataset.import(stream).then(() => {
 
         if (!! permit.agency) {
             let agencyAsNamedNode = permit.agency._core.iri
-            const agencyName = objVal(findQuadByLanguage(dataset, agencyAsNamedNode, rdf.namedNode('http://schema.org/name'), langPrios))
-            const agencyAcronym = objVal(findQuadByLanguage(dataset, agencyAsNamedNode, rdf.namedNode('http://permits.ld.admin.ch/ns#acronym'), langPrios))
+            const agencyName = objVal(findQuadByLanguage(dataset, agencyAsNamedNode, rdf.namedNode('https://schema.org/name'), langPrios))
+            const agencyAltName = objVal(findQuadByLanguage(dataset, agencyAsNamedNode, rdf.namedNode('https://schema.org/alternateName'), langPrios))
             console.log(`agency-name:    ${agencyName}`)
-            console.log(`agency-acronym: ${agencyAcronym}`)
+            console.log(`agency-altname: ${agencyAltName}`)
         }
 
         console.log('----------------------------------------------')
